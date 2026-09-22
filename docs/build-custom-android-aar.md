@@ -5,7 +5,8 @@
 ```bash
 FFMPEG_KIT_TRIM=1 ./android.sh \
   --enable-gpl --enable-x264 --enable-lame --enable-libwebp \
-  --enable-android-zlib --disable-arm-v7a --disable-x86
+  --enable-android-zlib --enable-android-media-codec \
+  --disable-arm-v7a --disable-x86
 ```
 
 - ABI: armeabi-v7a (neon), arm64-v8a, x86_64. `--disable-arm-v7a` = chỉ build bản neon (mọi thiết bị Android 7+ có NEON, neon nhanh hơn, cùng thư mục `jni/armeabi-v7a` trong AAR).

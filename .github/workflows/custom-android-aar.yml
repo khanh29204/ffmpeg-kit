@@ -37,7 +37,7 @@ jobs:
       - name: run the build script
         env:
           FFMPEG_KIT_TRIM: 1
-        run: ./android.sh --enable-gpl --enable-x264 --enable-lame --enable-libwebp --enable-android-zlib --disable-arm-v7a --disable-x86
+        run: ./android.sh --enable-gpl --enable-x264 --enable-lame --enable-libwebp --enable-android-zlib --enable-android-media-codec --disable-arm-v7a --disable-x86
       - name: print build logs
         if: ${{ always() }}
         run: cat build.log
