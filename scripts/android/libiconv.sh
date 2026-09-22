@@ -16,6 +16,9 @@ fi
 # ALWAYS CLEAN THE PREVIOUS BUILD
 make distclean 2>/dev/null 1>/dev/null
 
+# MAN PAGES ARE NOT NEEDED FOR THE LIBRARY BUILD; GROFF IS UNAVAILABLE ON CI
+${SED_INLINE} 's|^MAN2HTML = groff -mandoc -Thtml|MAN2HTML = true|' "${BASEDIR}"/src/"${LIB_NAME}"/Makefile.devel || return 1
+
 # REGENERATE BUILD FILES IF NECESSARY OR REQUESTED
 if [[ ! -f "${BASEDIR}"/src/"${LIB_NAME}"/configure ]] || [[ ${RECONF_libiconv} -eq 1 ]]; then
   ./autogen.sh || return 1
