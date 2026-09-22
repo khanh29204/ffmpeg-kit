@@ -345,6 +345,21 @@ if [[ -n ${FFMPEG_KIT_LTS_BUILD} ]] && [[ ${API} -lt 18 ]]; then
   export LDFLAGS+=" -Wl,--whole-archive ${BASEDIR}/android/ffmpeg-kit-android-lib/src/main/cpp/libandroidltssupport.a -Wl,--no-whole-archive"
 fi
 
+# MINIMAL BUILD: whitelist only the components required by the app
+# (h264 encode via x264, aac/mp3/mjpeg/png/webp, mp4/mp3/image2 containers,
+# crop/transpose/hflip/vflip/scale filters). Set FFMPEG_KIT_TRIM=1 to use.
+if [[ -n ${FFMPEG_KIT_TRIM} ]]; then
+  CONFIGURE_POSTFIX+="
+  --disable-everything \
+  --enable-protocol=file,pipe \
+  --enable-demuxer=mov,mp3,image2 \
+  --enable-muxer=mp4,mp3,image2 \
+  --enable-decoder=h264,mjpeg,png,webp,mp3,aac \
+  --enable-encoder=libx264,aac,libmp3lame,mjpeg,png,libwebp \
+  --enable-parser=h264,mjpeg,png,mp3 \
+  --enable-filter=crop,transpose,hflip,vflip,scale,format,null,anull"
+fi
+
 # ALWAYS BUILD SHARED LIBRARIES
 BUILD_LIBRARY_OPTIONS="--disable-static --enable-shared"
 
