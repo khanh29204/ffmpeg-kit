@@ -37,6 +37,6 @@ Bước `prerequisites` đã cài: `gperf texi2html nasm` (runner không có s�
 
 ## Sau build
 
-- Output: `prebuilt/android/ffmpeg-kit-custom-gpl-*.aar` (workflow upload artifact `ffmpeg-kit-custom-gpl`).
+- Output: `prebuilt/bundle-android-aar/ffmpeg-kit/ffmpeg-kit.aar` (workflow upload artifact `ffmpeg-kit-custom-gpl`).
 - Verify 16KB alignment từng `.so`: `objdump -p <file>.so | grep LOAD` → cột align phải ≥ `2**14`. Workflow tự chạy bước này.
 - Xác nhận lib enable: grep `--enable-libx264\|--enable-libmp3lame\|--enable-libwebp` trong `build.log` / `src/ffmpeg/ffbuild/config.log`.

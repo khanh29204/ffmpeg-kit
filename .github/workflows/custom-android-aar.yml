@@ -47,7 +47,7 @@ jobs:
       - name: verify 16 kb page alignment
         if: ${{ always() }}
         run: |
-          for so in $(find prebuilt/android -name "*.so"); do
+          for so in $(find prebuilt/android-* -name "*.so"); do
             echo "== $so"
             objdump -p "$so" | grep LOAD
           done
@@ -55,4 +55,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ffmpeg-kit-custom-gpl
-          path: prebuilt/android/*.aar
+          path: prebuilt/bundle-android-aar/ffmpeg-kit/ffmpeg-kit.aar
