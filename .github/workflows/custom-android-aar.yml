@@ -1,0 +1,46 @@
+name: android custom aar
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: custom gpl aar on linux
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: set up jdk 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+      - name: prerequisites
+        run: ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --uninstall "cmake;3.10.2.4988404" "cmake;3.18.1"
+      - name: set up android ndk r27
+        run: |
+          curl -s "https://dl.google.com/android/repository/android-ndk-r27b-linux.zip" -o ndk.zip
+          unzip -q -o ndk.zip -d .ndk
+          echo "ANDROID_NDK_ROOT=$PWD/.ndk/$(ls .ndk)" >> $GITHUB_ENV
+      - name: run the build script
+        run: ./android.sh --enable-gpl --enable-x264 --enable-lame --enable-libwebp --disable-arm-v7a --disable-x86
+      - name: print build logs
+        if: ${{ always() }}
+        run: cat build.log
+      - name: print ffbuild logs
+        if: ${{ failure() }}
+        run: '[[ -f ./src/ffmpeg/ffbuild/config.log ]] && tail -50 ./src/ffmpeg/ffbuild/config.log'
+      - name: verify 16 kb page alignment
+        if: ${{ always() }}
+        run: |
+          for so in $(find prebuilt/android -name "*.so"); do
+            echo "== $so"
+            objdump -p "$so" | grep LOAD
+          done
+      - name: upload aar
+        uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-kit-custom-gpl
+          path: prebuilt/android/*.aar
