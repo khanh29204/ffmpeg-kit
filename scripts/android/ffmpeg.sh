@@ -354,9 +354,9 @@ if [[ -n ${FFMPEG_KIT_TRIM} ]]; then
   --enable-protocol=file,pipe \
   --enable-demuxer=mov,mp3,image2 \
   --enable-muxer=mp4,mp3,image2 \
-  --enable-decoder=h264,h264_mediacodec,mjpeg,png,webp,mp3,aac \
-  --enable-encoder=libx264,aac,libmp3lame,mjpeg,png,libwebp \
-  --enable-parser=h264,mjpeg,png,mp3 \
+  --enable-decoder=h264,h264_mediacodec,mpeg4,mjpeg,png,webp,mp3,aac \
+  --enable-encoder=libx264,mpeg4,aac,libmp3lame,mjpeg,png,libwebp \
+  --enable-parser=h264,mpeg4video,mjpeg,png,mp3 \
   --enable-filter=crop,transpose,hflip,vflip,scale,format,null,anull"
 fi
 
