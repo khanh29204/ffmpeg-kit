@@ -12,6 +12,14 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v4
+      - name: cache build tree
+        uses: actions/cache@v4
+        with:
+          # sources đã tải + các thư viện native đã build; android.sh tự skip phần đã có
+          path: |
+            src
+            prebuilt
+          key: ffkit-${{ runner.os }}-${{ hashFiles('scripts/**', 'android.sh', '.github/workflows/custom-android-aar.yml') }}
       - name: set up jdk 17
         uses: actions/setup-java@v4
         with:
