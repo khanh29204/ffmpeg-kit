@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - 6.0.0
+    paths:
+      - '.github/workflows/custom-android-aar.yml'
+      - 'android.sh'
+      - 'scripts/**'
+      - 'android/**'
   workflow_dispatch:
 
 jobs:

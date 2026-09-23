@@ -18,13 +18,21 @@ jobs:
       contents: write
     steps:
       - name: install build deps
-        run: apk add --no-cache build-base nasm pkgconf xz curl lame-static
-      - name: download ffmpeg source
+        run: apk add --no-cache build-base nasm pkgconf xz curl
+      - name: download sources
         run: |
           curl -sL https://ffmpeg.org/releases/ffmpeg-6.0.1.tar.xz | tar xJ
+          curl -sL https://sourceforge.net/projects/lame/files/lame/3.100/lame-3.100.tar.gz | tar xz
+      - name: build lame (static)
+        run: |
+          cd lame-3.100
+          ./configure --enable-static --disable-shared --disable-frontend --disable-gtktest --prefix=/tmp/lame
+          make -j"$(nproc)" && make install
       - name: configure and build
         run: |
           cd ffmpeg-6.0.1
+          export PKG_CONFIG_PATH=/tmp/lame/lib/pkgconfig
+          export LDFLAGS="-L/tmp/lame/lib"
           ./configure \
             --enable-gpl --enable-libmp3lame \
             --enable-static --disable-shared --pkg-config-flags=--static \
@@ -35,6 +43,7 @@ jobs:
             --enable-muxer=mp3 \
             --enable-parser=mp3,aac,opus,vorbis,mpeg4audio \
             --enable-protocol=file \
+            --extra-cflags="-I/tmp/lame/include" \
             --enable-filter=anull,aresample,format,null \
             --disable-debug --enable-small --disable-doc --disable-ffprobe --disable-ffplay \
             --disable-network --disable-autodetect \
