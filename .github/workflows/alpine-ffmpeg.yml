@@ -1,0 +1,64 @@
+name: alpine ffmpeg static
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 6.0.0
+    paths:
+      - '.github/workflows/alpine-ffmpeg.yml'
+
+jobs:
+  build:
+    name: static ffmpeg for alpine (musl)
+    runs-on: ubuntu-22.04
+    container:
+      image: alpine:3.20
+    permissions:
+      contents: write
+    steps:
+      - name: install build deps
+        run: apk add --no-cache build-base nasm pkgconf xz curl lame-static
+      - name: download ffmpeg source
+        run: |
+          curl -sL https://ffmpeg.org/releases/ffmpeg-6.0.1.tar.xz | tar xJ
+      - name: configure and build
+        run: |
+          cd ffmpeg-6.0.1
+          ./configure \
+            --enable-gpl --enable-libmp3lame \
+            --enable-static --disable-shared --pkg-config-flags=--static \
+            --disable-everything \
+            --enable-demuxer=mov,mp3,matroska,ogg \
+            --enable-decoder=mp3,aac,opus,vorbis \
+            --enable-encoder=libmp3lame \
+            --enable-muxer=mp3 \
+            --enable-parser=mp3,aac,opus,vorbis,mpeg4audio \
+            --enable-protocol=file \
+            --enable-filter=anull,aresample,format,null \
+            --disable-debug --enable-small --disable-doc --disable-ffprobe --disable-ffplay \
+            --disable-network --disable-autodetect \
+            --prefix=/tmp/out
+          make -j"$(nproc)"
+          make install
+          strip /tmp/out/bin/ffmpeg
+      - name: test
+        run: /tmp/out/bin/ffmpeg -version
+      - name: package
+        run: |
+          tar -C /tmp/out/bin -czf ffmpeg-alpine-musl-static.tar.gz ffmpeg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-alpine-musl-static
+          path: ffmpeg-alpine-musl-static.tar.gz
+      - name: create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk add --no-cache github-cli
+          TAG="ffmpeg-alpine-6.0.1.${{ github.run_number }}"
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --notes "ffmpeg 6.0.1 static cho Alpine/musl. GPL (libmp3lame). Chỉ audio: m4a/aac, webm/opus, vorbis, mp3 → mp3." \
+            ffmpeg-alpine-musl-static.tar.gz

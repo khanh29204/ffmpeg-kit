@@ -11,7 +11,7 @@ FFMPEG_KIT_TRIM=1 ./android.sh \
 
 - ABI: armeabi-v7a (neon), arm64-v8a, x86_64. `--disable-arm-v7a` = chỉ build bản neon (mọi thiết bị Android 7+ có NEON, neon nhanh hơn, cùng thư mục `jni/armeabi-v7a` trong AAR).
 - `--enable-android-zlib`: **bắt buộc** — không có flag này ffmpeg build với `--disable-zlib` → encoder PNG chết.
-- `FFMPEG_KIT_TRIM=1`: whitelist ffmpeg core (chỉ giữ h264/aac/mp3/mjpeg/png/webp + mp4/mp3/image2 + filter crop/transpose/hflip/vflip/scale). Không set → build full codec, nặng hơn nhiều. Xem block trong `scripts/android/ffmpeg.sh`.
+- `FFMPEG_KIT_TRIM=1`: whitelist ffmpeg core (decode/encode: h264(+mediacodec)/mpeg4/aac/mp3/mjpeg/png/webp; container mp4/mp3/image2; filter crop/transpose/hflip/vflip/scale). Không set → build full codec, nặng hơn nhiều. Sửa danh sách codec trong block `FFMPEG_KIT_TRIM` của `scripts/android/ffmpeg.sh` — đổi whitelist → cache CI tự invalidate → recompile (đúng chủ đích).
 - License: **GPLv3.0** (do dùng x264 với `--enable-gpl`) — phải note trong app.
 
 ## Prerequisites — Linux local (Arch)
