@@ -18,7 +18,7 @@ jobs:
       contents: write
     steps:
       - name: install build deps
-        run: apk add --no-cache build-base nasm pkgconf xz curl
+        run: apk add --no-cache build-base nasm pkgconf xz curl file
       - name: download sources
         run: |
           curl -sL https://ffmpeg.org/releases/ffmpeg-6.0.1.tar.xz | tar xJ
@@ -31,14 +31,16 @@ jobs:
       - name: configure and build
         run: |
           cd ffmpeg-6.0.1
+          # Nguồn vừa giải nén, sạch config cũ; distclean phòng hờ theo spec
+          make distclean 2>/dev/null || true
           export PKG_CONFIG_PATH=/tmp/lame/lib/pkgconfig
           export LDFLAGS="-L/tmp/lame/lib"
           ./configure \
             --enable-gpl --enable-libmp3lame \
             --enable-static --disable-shared --pkg-config-flags=--static \
             --disable-everything \
-            --enable-demuxer=mov,mp3,matroska,ogg \
-            --enable-decoder=mp3,aac,opus,vorbis \
+            --enable-demuxer=mov,mp3,matroska,ogg,s16le \
+            --enable-decoder=mp3,aac,opus,vorbis,pcm_s16le \
             --enable-encoder=libmp3lame,pcm_s16le \
             --enable-muxer=mp3,s16le \
             --enable-parser=mp3,aac,opus,vorbis,mpeg4audio \
@@ -48,11 +50,34 @@ jobs:
             --disable-debug --enable-small --disable-doc --disable-ffprobe --disable-ffplay \
             --disable-network --disable-autodetect \
             --prefix=/tmp/out
+          # VERIFY SAU CONFIGURE — thiếu là dừng, không make
+          grep -E "CONFIG_S16LE_MUXER|CONFIG_PCM_S16LE_ENCODER|CONFIG_PIPE_PROTOCOL" ffbuild/config.mak
+          grep -q "^CONFIG_S16LE_MUXER=yes" ffbuild/config.mak
+          grep -q "^CONFIG_PCM_S16LE_ENCODER=yes" ffbuild/config.mak
+          grep -q "^CONFIG_PIPE_PROTOCOL=yes" ffbuild/config.mak
           make -j"$(nproc)"
           make install
           strip /tmp/out/bin/ffmpeg
-      - name: test
-        run: /tmp/out/bin/ffmpeg -version
+      - name: verify binary
+        run: |
+          FF=/tmp/out/bin/ffmpeg
+          $FF -hide_banner -version
+          echo "-- muxers";   $FF -hide_banner -muxers   2>/dev/null | grep -E " E s16le"
+          echo "-- encoders"; $FF -hide_banner -encoders 2>/dev/null | grep -E "pcm_s16le|libmp3lame"
+          echo "-- demuxers"; $FF -hide_banner -demuxers 2>/dev/null | grep -E "mov|mp3|ogg|matroska"
+          echo "-- static check"
+          file "$FF" | grep -q "statically linked"
+          ldd "$FF" 2>&1 | grep -q "not a dynamic executable"
+      - name: functional test (pcm s16le ra đúng số byte)
+        run: |
+          FF=/tmp/out/bin/ffmpeg
+          # không có lavfi (đã --disable-everything) → tạo PCM 2s giả lập rồi round-trip qua mp3
+          head -c 32000 /dev/urandom > in.pcm   # 2s × 8000Hz × 2 bytes, mono
+          $FF -hide_banner -loglevel error -f s16le -ar 8000 -ac 1 -i in.pcm -c:a libmp3lame -b:a 64k test.mp3
+          N=$($FF -hide_banner -loglevel error -i test.mp3 -vn -ac 1 -ar 8000 \
+                -c:a pcm_s16le -f s16le pipe:1 | wc -c)
+          echo "PCM out: $N bytes (kỳ vọng ~32000, dung sai do frame padding mp3)"
+          [ "$N" -ge 30000 ] && [ "$N" -le 34000 ]
       - name: package
         run: |
           tar -C /tmp/out/bin -czf ffmpeg-alpine-musl-static.tar.gz ffmpeg
