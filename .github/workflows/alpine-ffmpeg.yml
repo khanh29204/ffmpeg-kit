@@ -39,10 +39,10 @@ jobs:
             --enable-gpl --enable-libmp3lame \
             --enable-static --disable-shared --pkg-config-flags=--static \
             --disable-everything \
-            --enable-demuxer=mov,mp3,matroska,ogg,s16le \
+            --enable-demuxer=mov,mp3,matroska,ogg,pcm_s16le \
             --enable-decoder=mp3,aac,opus,vorbis,pcm_s16le \
             --enable-encoder=libmp3lame,pcm_s16le \
-            --enable-muxer=mp3,s16le \
+            --enable-muxer=mp3,pcm_s16le \
             --enable-parser=mp3,aac,opus,vorbis,mpeg4audio \
             --enable-protocol=file,pipe \
             --extra-cflags="-I/tmp/lame/include" \
@@ -51,8 +51,9 @@ jobs:
             --disable-network --disable-autodetect \
             --prefix=/tmp/out
           # VERIFY SAU CONFIGURE — thiếu là dừng, không make
-          grep -E "CONFIG_S16LE_MUXER|CONFIG_PCM_S16LE_ENCODER|CONFIG_PIPE_PROTOCOL" ffbuild/config.mak
-          grep -q "^CONFIG_S16LE_MUXER=yes" ffbuild/config.mak
+          # (tên symbol: pcm_s16le_muxer/encoder trong pcmenc.c, không phải "s16le")
+          grep -E "CONFIG_PCM_S16LE_(MUXER|ENCODER)|CONFIG_PIPE_PROTOCOL" ffbuild/config.mak
+          grep -q "^CONFIG_PCM_S16LE_MUXER=yes" ffbuild/config.mak
           grep -q "^CONFIG_PCM_S16LE_ENCODER=yes" ffbuild/config.mak
           grep -q "^CONFIG_PIPE_PROTOCOL=yes" ffbuild/config.mak
           make -j"$(nproc)"
