@@ -353,7 +353,7 @@ if [[ -n ${FFMPEG_KIT_TRIM} ]]; then
   --disable-everything \
   --enable-protocol=file,pipe \
   --enable-demuxer=mov,mp3,image2 \
-  --enable-muxer=mp4,mp3,image2 \
+  --enable-muxer=mp4,mp3,image2,webp \
   --enable-decoder=h264,h264_mediacodec,mpeg4,mjpeg,png,webp,mp3,aac \
   --enable-encoder=libx264,h264_mediacodec,hevc_mediacodec,mpeg4,aac,libmp3lame,mjpeg,png,libwebp \
   --enable-parser=h264,mpeg4video,mjpeg,png,mp3 \
