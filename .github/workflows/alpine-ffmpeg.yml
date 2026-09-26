@@ -39,10 +39,10 @@ jobs:
             --disable-everything \
             --enable-demuxer=mov,mp3,matroska,ogg \
             --enable-decoder=mp3,aac,opus,vorbis \
-            --enable-encoder=libmp3lame \
-            --enable-muxer=mp3 \
+            --enable-encoder=libmp3lame,pcm_s16le \
+            --enable-muxer=mp3,s16le \
             --enable-parser=mp3,aac,opus,vorbis,mpeg4audio \
-            --enable-protocol=file \
+            --enable-protocol=file,pipe \
             --extra-cflags="-I/tmp/lame/include" \
             --enable-filter=anull,aresample,format,null \
             --disable-debug --enable-small --disable-doc --disable-ffprobe --disable-ffplay \
@@ -60,14 +60,22 @@ jobs:
         with:
           name: ffmpeg-alpine-musl-static
           path: ffmpeg-alpine-musl-static.tar.gz
-      - name: create release
+      - name: upload to latest aar release (nếu có), không thì tự tạo release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           apk add --no-cache github-cli
-          TAG="ffmpeg-alpine-6.0.1.${{ github.run_number }}"
-          gh release create "$TAG" \
-            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "$TAG" \
-            --notes "ffmpeg 6.0.1 static cho Alpine/musl. GPL (libmp3lame). Chỉ audio: m4a/aac, webm/opus, vorbis, mp3 → mp3." \
-            ffmpeg-alpine-musl-static.tar.gz
+          TAG=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 30 \
+                  --json tagName -q '.[].tagName' | grep '^v6.0.0-custom' | head -1)
+          if [ -n "$TAG" ]; then
+            echo "Uploading vào release $TAG"
+            gh release upload "$TAG" ffmpeg-alpine-musl-static.tar.gz --clobber \
+              --repo "$GITHUB_REPOSITORY"
+          else
+            TAG="ffmpeg-alpine-6.0.1.${{ github.run_number }}"
+            gh release create "$TAG" \
+              --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "$TAG" \
+              --notes "ffmpeg 6.0.1 static cho Alpine/musl. GPL (libmp3lame). Chỉ audio: m4a/aac, webm/opus, vorbis, mp3 → mp3, pcm s16le (waveform)." \
+              ffmpeg-alpine-musl-static.tar.gz
+          fi
