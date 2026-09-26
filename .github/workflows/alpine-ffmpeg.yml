@@ -49,6 +49,7 @@ jobs:
             --enable-filter=anull,aresample,format,null \
             --disable-debug --enable-small --disable-doc --disable-ffprobe --disable-ffplay \
             --disable-network --disable-autodetect \
+            --extra-ldflags=-static \
             --prefix=/tmp/out
           # VERIFY SAU CONFIGURE — thiếu là dừng, không make
           # (tên symbol: pcm_s16le_muxer/encoder trong pcmenc.c, không phải "s16le")
@@ -67,9 +68,11 @@ jobs:
           echo "-- encoders"; $FF -hide_banner -encoders 2>/dev/null | grep -E "pcm_s16le|libmp3lame"
           echo "-- demuxers"; $FF -hide_banner -demuxers 2>/dev/null | grep -E "mov|mp3|ogg|matroska"
           echo "-- static check"
-          # Alpine gcc mặc định PIE → file in "static-pie linked" thay vì "statically linked"
+          file "$FF"
+          # ldd của musl với binary static: "Not a valid dynamic program"
+          ldd "$FF" 2>&1 || true
           file "$FF" | grep -qE "statically linked|static-pie linked"
-          ldd "$FF" 2>&1 | grep -q "not a dynamic executable"
+          ldd "$FF" 2>&1 | grep -qiE "not a dynamic executable|not a valid dynamic program"
       - name: functional test (pcm s16le ra đúng số byte)
         run: |
           FF=/tmp/out/bin/ffmpeg
